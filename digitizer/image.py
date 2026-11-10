@@ -1,6 +1,7 @@
 """Controlled color-image -> embroidery region extraction.
 
-Default mode uses exact RGB colors. Optional guarded antialias cleanup\nrecovers only solid-area colors and their plausible edge mixtures.
+Default mode uses exact RGB colors. Optional guarded antialias cleanup
+recovers only solid-area colors and their plausible edge mixtures.
 A pixel is assigned to exactly one color. Connected contour hierarchy becomes
 outer geometry and holes. Background color is determined by border prevalence,
 then sewn first. This module does NOT attempt production-grade digitization.
@@ -11,7 +12,8 @@ from pathlib import Path
 from .layers import Region
 
 
-def image_regions(path, width_mm=60., min_area_px=9, max_colors=12,\n                  antialias_cleanup=False):
+def image_regions(path, width_mm=60., min_area_px=9, max_colors=12,
+                  antialias_cleanup=False):
     try:
         import cv2
         import numpy as np
@@ -30,7 +32,10 @@ def image_regions(path, width_mm=60., min_area_px=9, max_colors=12,\n           
     height,width=rgb.shape[:2]
     if width<3 or height<3 or width*height>4_000_000:
         raise ValueError("Image must be >=3x3 pixels and <=4 million pixels")
-    if antialias_cleanup:\n        from .palette import recover_flat_palette\n        rgb, _ = recover_flat_palette(rgb, max_colors=max_colors)\n    colors,counts=np.unique(rgb.reshape(-1,3),axis=0,return_counts=True)
+    if antialias_cleanup:
+        from .palette import recover_flat_palette
+        rgb, _ = recover_flat_palette(rgb, max_colors=max_colors)
+    colors,counts=np.unique(rgb.reshape(-1,3),axis=0,return_counts=True)
     if len(colors)>max_colors:
         raise ValueError(
             f"Image has {len(colors)} exact colors; this first importer supports "
