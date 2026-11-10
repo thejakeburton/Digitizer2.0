@@ -36,6 +36,32 @@ The `--antialias-cleanup` flag is **opt-in**. It identifies solid 3x3 color core
 
 **Do not use this prototype for production embroidery without inspecting the PES in an embroidery viewer and doing a controlled scrap sew-out.** SVG is a command visualization, not a fabric or thread-coverage prediction.
 
+## Mac fill-only test app
+
+The **Mac Test App** GitHub Actions workflow packages `mac_app.py` into
+`Deathwish Digitizer 2 Test.app`. Open the latest successful workflow run
+at [Mac Test App](https://github.com/thejakeburton/Digitizer2.0/actions/workflows/mac-build.yml),
+then under **Artifacts**, download `deathwish-digitizer-2-mac-test`.
+Unzip the artifact, then unzip the included app ZIP. Drag the app to
+Applications if desired.
+
+This is an unsigned experimental app: macOS may block it on first launch.
+In Finder, Control-click the app and choose **Open**, or use
+System Settings → Privacy & Security → Open Anyway after an attempted launch.
+Do not disable Gatekeeper globally.
+
+1. Open a PNG or JPG containing flat-color artwork (not a photo).
+2. Choose design width in mm; set spacing (default 0.40) and stitch length (2.5).
+3. Click **Generate Stitches**. The right panel reads the actual exported PES
+   and draws sewn stitches only.
+4. If it looks reasonable, choose **Export PES** and open the file in Artspira.
+5. Verify dimensions, thread blocks, stitch coverage and travel before a
+   small controlled scrap-fabric sew-out.
+
+There is deliberately **no satin option**. The preview is geometric, not
+fabric-accurate; complex imagery may still fail safely at import. This app is
+for testing, not production.
+
 ## Visual review of the exported PES
 
 Every successful GitHub Actions **Tests** run produces an artifact named
