@@ -23,10 +23,6 @@ def recover_flat_palette(rgb, max_colors=12, tolerance=18.0,
         raise ValueError("Expected uint8 RGB image")
     height,width=rgb.shape[:2]
     unique, counts=np.unique(rgb.reshape(-1,3),axis=0,return_counts=True)
-    if len(unique)<=max_colors:
-        return rgb.copy(), {"input_colors":len(unique),"output_colors":len(unique),
-                            "changed_pixels":0,"unexplained_pixels":0}
-
     candidates=[]
     # Need at least one solid 3x3 pixel core; this distinguishes solid
     # intentional colors from the 1-pixel antialias fringe in ordinary art.
@@ -40,6 +36,9 @@ def recover_flat_palette(rgb, max_colors=12, tolerance=18.0,
     if not candidates or len(candidates)>max_colors:
         raise ValueError("Cannot recover a reliable flat-color palette; "
                          "solid regions missing or too many colors")
+    if len(unique)==len(candidates):
+        return rgb.copy(), {"input_colors":len(unique),"output_colors":len(unique),
+                            "changed_pixels":0,"unexplained_pixels":0}
 
     palette=np.asarray([c for c,n in candidates],dtype=np.float64)
     pixels=rgb.reshape(-1,3).astype(np.float64)
