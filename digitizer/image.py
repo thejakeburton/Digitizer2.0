@@ -49,6 +49,41 @@ def image_regions(path, width_mm=60., min_area_px=9, max_colors=12,
     )
     mm_per_px=width_mm/width
     result=[]
+    try:
+        from shapely.geometry import Polygon
+        from shapely.validation import make_valid
+    except ImportError as exc:
+        raise RuntimeError("Image geometry repair requires shapely. Install the updated Mac dependencies.") from exc
+
+    def repaired_polygons(outer, holes):
+        """Repair pixel-traced rings before the strict stitch planner sees them.
+
+        Pixel contours can self-touch at diagonal pixels or after simplification.
+        Preserve the valid polygon pieces rather than disabling validation.
+        """
+        try:
+            shape=Polygon(outer,holes)
+            if not shape.is_valid:
+                shape=make_valid(shape)
+            pending=[shape]
+            while pending:
+                part=pending.pop()
+                if part.geom_type=="Polygon":
+                    if part.is_empty or part.area<1e-7:
+                        continue
+                    # Buffer(0) resolves remaining coincident boundaries.
+                    if not part.is_valid:
+                        pending.append(part.buffer(0))
+                        continue
+                    yield (tuple((float(x),float(y)) for x,y in list(part.exterior.coords)[:-1]),
+                           tuple(tuple((float(x),float(y)) for x,y in list(h.coords)[:-1])
+                                 for h in part.interiors))
+                elif hasattr(part,"geoms"):
+                    pending.extend(reversed(part.geoms))
+        except Exception:
+            # Reject this malformed contour, not the entire artwork.
+            return
+
     for color in order:
         mask=np.all(rgb==np.array(color,dtype=np.uint8),axis=2).astype(np.uint8)*255
         # RETR_CCOMP yields alternating external components / holes.
@@ -74,8 +109,9 @@ def image_regions(path, width_mm=60., min_area_px=9, max_colors=12,
                 child=int(hierarchy[child][0])
             holes=tuple(polygon(contours[h]) for h in hole_indices)
             if len(outer)>=3:
-                result.append(Region("#"+"".join(f"{int(c):02x}" for c in color),
-                                     outer,holes))
+                for fixed_outer,fixed_holes in repaired_polygons(outer,holes):
+                    result.append(Region("#"+"".join(f"{int(c):02x}" for c in color),
+                                         fixed_outer,fixed_holes))
     if not result:
         raise ValueError("No image regions met the minimum area")
     return result
