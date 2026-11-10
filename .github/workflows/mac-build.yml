@@ -7,7 +7,7 @@ on:
 
 jobs:
   package-mac:
-    runs-on: macos-15
+    runs-on: macos-14
     timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
