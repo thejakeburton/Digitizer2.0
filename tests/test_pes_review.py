@@ -20,6 +20,16 @@ class PESPreviewTests(unittest.TestCase):
             self.assertGreater((directory/"sewn.png").stat().st_size,100)
             self.assertGreater((directory/"jumps.png").stat().st_size,100)
 
+
+    def test_hole_routing_avoids_per_row_jump_explosion(self):
+        from digitizer.shape import polygon_tatami
+        from digitizer.engine import metrics
+        outer=[(0,0),(60,0),(60,40),(0,40)]
+        hole=[(13,8),(47,8),(47,32),(13,32)]
+        steps=polygon_tatami(outer,[hole],spacing=0.4)
+        # Regression: old planner jumped across the hole every row (~60).
+        self.assertLessEqual(metrics(steps)["JUMP"],10)
+
     def test_preview_tracks_color_change(self):
         from PIL import Image
         from digitizer.engine import Command
