@@ -23,7 +23,9 @@ def main():
                    default='rectangle')
     p.add_argument('--edge-inset', type=float, default=0.0)
     p.add_argument('--out', default='output')
-    p.add_argument('--image', default=None, help='Strict-palette PNG image to digitize')
+    p.add_argument('--image', default=None, help='PNG artwork to digitize')
+    p.add_argument('--antialias-cleanup', action='store_true',
+                   help='Cautiously map edge blends to detected flat colors')
     p.add_argument('--pes', action='store_true', help='Also write PES (requires pyembroidery)')
     a = p.parse_args()
     out = Path(a.out)
@@ -34,7 +36,8 @@ def main():
     if a.image:
         from digitizer.image import image_regions
         from digitizer.layers import plan_layers
-        regions=image_regions(a.image,width_mm=a.width)
+        regions=image_regions(a.image,width_mm=a.width,
+                              antialias_cleanup=a.antialias_cleanup)
         cmds,colors=plan_layers(regions,spacing=a.spacing,stitch_length=a.stitch_length)
     elif a.shape == 'rectangle':
         cmds = rectangle_tatami(a.width,a.height,a.spacing,a.stitch_length)
