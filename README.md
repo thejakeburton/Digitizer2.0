@@ -36,31 +36,36 @@ The `--antialias-cleanup` flag is **opt-in**. It identifies solid 3x3 color core
 
 **Do not use this prototype for production embroidery without inspecting the PES in an embroidery viewer and doing a controlled scrap sew-out.** SVG is a command visualization, not a fabric or thread-coverage prediction.
 
-## Mac fill-only test app
+## Mac fill-only test app (Linux-packaged, no macOS runner)
 
-The **Mac Test App** GitHub Actions workflow packages `mac_app.py` into
-`Deathwish Digitizer 2 Test.app`. Open the latest successful workflow run
-at [Mac Test App](https://github.com/thejakeburton/Digitizer2.0/actions/workflows/mac-build.yml),
-then under **Artifacts**, download `deathwish-digitizer-2-mac-test`.
-Unzip the artifact, then unzip the included app ZIP. Drag the app to
-Applications if desired.
+The [Mac Test App workflow](https://github.com/thejakeburton/Digitizer2.0/actions/workflows/mac-build.yml)
+runs on **Ubuntu**, so it no longer waits for GitHub-hosted Mac runners. Every
+successful run uploads an artifact named `deathwish-digitizer-2-mac-test`.
+Download it, unzip the artifact and the contained `Deathwish-Digitizer-2-Mac-Test.zip`,
+then open `Deathwish Digitizer 2 Test.app` on your Mac.
 
-This is an unsigned experimental app: macOS may block it on first launch.
-In Finder, Control-click the app and choose **Open**, or use
-System Settings → Privacy & Security → Open Anyway after an attempted launch.
-Do not disable Gatekeeper globally.
+**Important:** This is a **bootstrap Mac app**, not a fully self-contained
+PyInstaller executable. On the **first launch only**, it needs internet access
+and **Python 3.10+ with Tkinter** already installed on your Mac. The official
+[python.org macOS installer](https://www.python.org/downloads/macos/) includes
+Tkinter. The app creates a private virtual environment under
+`~/Library/Application Support/Deathwish Digitizer 2 Test/` and installs its
+libraries there. It never requires GitHub's macOS build service. If launch
+fails, see `~/Library/Application Support/Deathwish Digitizer 2 Test/launch.log`.
 
-1. Open a PNG or JPG containing flat-color artwork (not a photo).
-2. Choose design width in mm; set spacing (default 0.40) and stitch length (2.5).
-3. Click **Generate Stitches**. The right panel reads the actual exported PES
-   and draws sewn stitches only.
-4. If it looks reasonable, choose **Export PES** and open the file in Artspira.
-5. Verify dimensions, thread blocks, stitch coverage and travel before a
-   small controlled scrap-fabric sew-out.
+Since the bundle is unsigned, macOS may block it initially. In Finder,
+Control-click the app and choose **Open**, or use
+System Settings → Privacy & Security → Open Anyway. Do not disable Gatekeeper.
+
+1. Open a flat-color PNG or JPG (not a photograph).
+2. Set design width, fill row spacing and stitch length.
+3. Click **Generate Stitches** to view the actual PES stitch commands.
+4. Choose **Export PES**, inspect the file in Artspira, and verify dimensions,
+   thread colors, stitch coverage and travel before a scrap-fabric sew-out.
 
 There is deliberately **no satin option**. The preview is geometric, not
-fabric-accurate; complex imagery may still fail safely at import. This app is
-for testing, not production.
+fabric-accurate; complex imagery may still fail at import. This is a
+test app, not a production-ready digitizer.
 
 ## Visual review of the exported PES
 
