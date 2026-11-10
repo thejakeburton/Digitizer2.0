@@ -9,7 +9,7 @@ class PaletteRecoveryTests(unittest.TestCase):
         image[:,60:]=[240,190,0]
         for x,t in ((58,0.25),(59,0.5),(60,0.75)):
             image[:,x]=np.rint(np.array([240,190,0])*t).astype(np.uint8)
-        clean,report=recover_flat_palette(image,max_colors=2)
+        clean,report=recover_flat_palette(image)
         self.assertEqual(report["output_colors"],2)
         self.assertEqual(report["unexplained_pixels"],0)
         self.assertGreater(report["changed_pixels"],0)
