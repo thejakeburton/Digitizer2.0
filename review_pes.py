@@ -7,6 +7,7 @@ from digitizer.layers import plan_layers
 from digitizer.export import write_pes
 from digitizer.engine import metrics
 from digitizer.pes_review import decode_pes,pes_metrics,render_pes
+from digitizer.coverage import coverage_from_pes
 
 
 def main():
@@ -23,7 +24,9 @@ def main():
     readback=decode_pes(out/"test.pes")
     render_pes(readback,colors,out/"actual-sewn-only.png")
     render_pes(readback,colors,out/"actual-with-jumps.png",show_jumps=True)
-    report={"source":"Synthetic two-color flat artwork",
+    coverage=coverage_from_pes(out/"source.png",readback,colors,60,
+                               out/"estimated-coverage.png")
+    report={"nominal_coverage":coverage,"source":"Synthetic two-color flat artwork",
             "planned":metrics(plan),"pes_readback":pes_metrics(readback),
             "planned_colors":colors,"regions":len(regions),
             "preview_note":"Red paths in jumps image are NON-SEWN travel; previews are geometry only."}
