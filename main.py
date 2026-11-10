@@ -23,13 +23,20 @@ def main():
                    default='rectangle')
     p.add_argument('--edge-inset', type=float, default=0.0)
     p.add_argument('--out', default='output')
+    p.add_argument('--image', default=None, help='Strict-palette PNG image to digitize')
     p.add_argument('--pes', action='store_true', help='Also write PES (requires pyembroidery)')
     a = p.parse_args()
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
     corners = [(0,0),(a.width,0),(a.width,a.height),(0,a.height)]
     holes = []
-    if a.shape == 'rectangle':
+    colors = []
+    if a.image:
+        from digitizer.image import image_regions
+        from digitizer.layers import plan_layers
+        regions=image_regions(a.image,width_mm=a.width)
+        cmds,colors=plan_layers(regions,spacing=a.spacing,stitch_length=a.stitch_length)
+    elif a.shape == 'rectangle':
         cmds = rectangle_tatami(a.width,a.height,a.spacing,a.stitch_length)
     else:
         if a.shape == 'l-shape':
@@ -43,14 +50,17 @@ def main():
                     (a.width*0.35,a.height*0.7)]]
         cmds=polygon_tatami(corners,holes,spacing=a.spacing,
                             stitch_length=a.stitch_length,edge_inset=a.edge_inset)
-    filename=a.shape
+    filename='imported-image' if a.image else a.shape
     save_svg(cmds,out/(filename+'.svg'))
     (out/(filename+'_stitches.json')).write_text(
         json.dumps([c.__dict__ for c in cmds],indent=2))
     report=metrics(cmds)
-    if a.shape!='rectangle':
+    if a.shape!='rectangle' and not a.image:
         report['geometric_coverage']=coverage_report(
             cmds,corners,holes,sample_step=0.7,thread_width=0.4)
+    if a.image:
+        report['thread_colors'] = colors
+        report['regions'] = len(regions)
     (out/(filename+'_metrics.json')).write_text(json.dumps(report,indent=2))
     if a.pes:
         from digitizer.export import write_pes
