@@ -155,46 +155,60 @@ def polygon_tatami(outer, holes=(), spacing=0.4, stitch_length=2.5,
     if height<0.3 or max(xs)-min(xs)>300 or height>300:
         raise ValueError('Polygon bounds must fit prototype limits')
     rows=max(2,ceil(height/spacing)+1)
-    # Interior offsets avoid exact vertex scanlines, which can be degenerate.
     dy=height/rows
-    cmds=[]
-    total_intervals=0
-    max_actual_gap=0.0
-    last_active_y=None
+    # Build scanline intervals first. When a hole splits several consecutive
+    # rows, sewing each lane vertically avoids jumping over the hole on every
+    # horizontal row. Changes in interval count create new planning bands.
+    scanlines=[]
     for row in range(rows):
         y=min(ys)+(row+0.5)*dy
         intervals=scanline_intervals(y,outer,holes,edge_inset=edge_inset)
-        if not intervals:
-            continue
-        total_intervals+=len(intervals)
-        if last_active_y is not None:
-            max_actual_gap=max(max_actual_gap,y-last_active_y)
-        last_active_y=y
-        if row%2:
-            intervals=list(reversed(intervals))
-        for k,(a,b) in enumerate(intervals):
-            if row%2:
-                a,b=b,a
-            # Enter a segment with an explicit JUMP unless the straight
-            # transit from the current needle position is safe to sew.
-            if not cmds or not _safe_segment((cmds[-1].x,cmds[-1].y),(a,y),outer,holes):
-                cmds.append(Command('JUMP',a,y))
-            else:
-                _line_to(cmds,a,y,stitch_length)
-            width=abs(b-a)
-            offset=(row%stagger)*stitch_length/stagger
-            points=[0.0]
-            first=offset if offset>1e-8 else stitch_length
-            d=first
-            while d < width-1e-8:
-                points.append(d)
-                d+=stitch_length
-            points.append(width)
-            if len(points)>2 and points[1]<0.5: points.pop(1)
-            if len(points)>2 and width-points[-2]<0.5: points.pop(-2)
-            direction=1 if b>a else -1
-            for d in points[1:]:
-                _line_to(cmds,a+direction*d,y,stitch_length)
+        if intervals:
+            scanlines.append((row,y,intervals))
+    cmds=[]
+
+    def sew_interval(row,y,a,b,reverse):
+        if reverse:
+            a,b=b,a
+        if not cmds or not _safe_segment(
+                (cmds[-1].x,cmds[-1].y),(a,y),outer,holes):
+            cmds.append(Command('JUMP',a,y))
+        else:
+            _line_to(cmds,a,y,stitch_length)
+        width=abs(b-a)
+        offset=(row%stagger)*stitch_length/stagger
+        points=[0.0]
+        first=offset if offset>1e-8 else stitch_length
+        d=first
+        while d<width-1e-8:
+            points.append(d)
+            d+=stitch_length
+        points.append(width)
+        if len(points)>2 and points[1]<0.5:
+            points.pop(1)
+        if len(points)>2 and width-points[-2]<0.5:
+            points.pop(-2)
+        direction=1 if b>a else -1
+        for distance in points[1:]:
+            _line_to(cmds,a+direction*distance,y,stitch_length)
+
+    # Split the image into maximal consecutive bands with the same number
+    # of horizontal intervals. Within each band, sew each interval column
+    # across its rows before moving to the next column.
+    bands=[]
+    for item in scanlines:
+        if (not bands or len(item[2])!=len(bands[-1][-1][2])
+                or item[0]!=bands[-1][-1][0]+1):
+            bands.append([])
+        bands[-1].append(item)
+    for band in bands:
+        count=len(band[0][2])
+        for lane in range(count):
+            # Opposite vertical directions between lanes reduce repositioning.
+            track=band if lane%2==0 else list(reversed(band))
+            for i,(row,y,intervals) in enumerate(track):
+                a,b=intervals[lane]
+                sew_interval(row,y,a,b,reverse=bool(i%2))
     if not cmds:
         raise ValueError('Shape has no fillable scanline intervals')
     cmds.append(Command('END',cmds[-1].x,cmds[-1].y))
