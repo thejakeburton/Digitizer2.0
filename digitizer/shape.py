@@ -21,6 +21,51 @@ def _validate_ring(ring):
     return p
 
 
+
+def _intersects(a, b, c, d):
+    """Detect intersection, including collinear contact, within tolerance."""
+    def orientation(p, q, r):
+        z=(q[0]-p[0])*(r[1]-p[1])-(q[1]-p[1])*(r[0]-p[0])
+        return 0 if abs(z)<1e-9 else (1 if z>0 else -1)
+    def on_segment(p, q, r):
+        return (min(p[0],r[0])-1e-9<=q[0]<=max(p[0],r[0])+1e-9 and
+                min(p[1],r[1])-1e-9<=q[1]<=max(p[1],r[1])+1e-9)
+    o1,o2=orientation(a,b,c),orientation(a,b,d)
+    o3,o4=orientation(c,d,a),orientation(c,d,b)
+    if o1!=o2 and o3!=o4:
+        return True
+    return ((o1==0 and on_segment(a,c,b)) or (o2==0 and on_segment(a,d,b)) or
+            (o3==0 and on_segment(c,a,d)) or (o4==0 and on_segment(c,b,d)))
+
+
+def _validate_geometry(outer, holes):
+    rings=[outer]+list(holes)
+    for ring in rings:
+        n=len(ring)
+        for i in range(n):
+            if hypot(ring[i][0]-ring[(i+1)%n][0],
+                     ring[i][1]-ring[(i+1)%n][1])<1e-8:
+                raise ValueError('Polygon contains a zero-length edge')
+            for j in range(i+1,n):
+                if j==i+1 or (i==0 and j==n-1):
+                    continue
+                if _intersects(ring[i],ring[(i+1)%n],
+                               ring[j],ring[(j+1)%n]):
+                    raise ValueError('Polygon contains crossing or touching edges')
+    for i,hole in enumerate(holes):
+        if not all(point_inside(v,outer) for v in hole):
+            raise ValueError('Hole extends outside the outer polygon')
+        for other in [outer]+holes[:i]:
+            for a,b in zip(hole,hole[1:]+hole[:1]):
+                for c,d in zip(other,other[1:]+other[:1]):
+                    if _intersects(a,b,c,d):
+                        raise ValueError('Hole overlaps or touches another boundary')
+        if any(point_inside(v,hole) for other_hole in holes[:i] for v in other_hole):
+            raise ValueError('Nested holes are not supported')
+        if any(point_inside(v,other_hole) for other_hole in holes[:i] for v in hole):
+            raise ValueError('Nested holes are not supported')
+
+
 def point_inside(point, outer, holes=()):
     """Even/odd point-in-polygon, boundary treated as permitted.
 
@@ -99,6 +144,7 @@ def polygon_tatami(outer, holes=(), spacing=0.4, stitch_length=2.5,
     """
     outer=_validate_ring(outer)
     holes=[_validate_ring(h) for h in holes]
+    _validate_geometry(outer, holes)
     if not all(isfinite(v) and v >= 0 for v in (edge_inset,)) or not (
         isfinite(spacing) and spacing>=0.15 and
         isfinite(stitch_length) and stitch_length>=0.5 and
