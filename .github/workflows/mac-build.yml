@@ -10,49 +10,29 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  cancel-stale-build:
-    runs-on: ubuntu-latest
-    permissions:
-      actions: write
-      contents: read
-    steps:
-      - name: Cancel stalled previous Mac test build
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh api --method POST \
-            repos/${{ github.repository }}/actions/runs/42880012524/cancel || \
-            echo 'Previous run already finished or could not be canceled; proceeding.'
   package-mac:
-    needs: cancel-stale-build
-    runs-on: macos-15
-    timeout-minutes: 35
+    # Build a Mac .app launcher on Ubuntu, avoiding GitHub's unavailable
+    # macOS runners. On first launch, the app installs Python dependencies
+    # into the user's Application Support directory.
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Install dependencies
+      - name: Test digitizer
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install pyinstaller pillow numpy opencv-python-headless pyembroidery
-      - name: Validate code and test engine
-        run: |
+          python -m pip install pillow numpy opencv-python-headless pyembroidery
           python -m compileall -q mac_app.py digitizer
           python -m unittest discover -s tests -v
           python review_pes.py
-      - name: Package Mac application
+      - name: Assemble Mac application without Mac runner
         run: |
-          python -m PyInstaller --noconfirm --clean --windowed --onedir \
-            --name "Deathwish Digitizer 2 Test" \
-            --collect-all cv2 --collect-all pyembroidery \
-            --hidden-import PIL._tkinter_finder \
-            mac_app.py
-          test -f "dist/Deathwish Digitizer 2 Test.app/Contents/MacOS/Deathwish Digitizer 2 Test"
-          /usr/bin/ditto -c -k --sequesterRsrc --keepParent \
-            "dist/Deathwish Digitizer 2 Test.app" "Deathwish-Digitizer-2-Mac-Test.zip"
-          unzip -t "Deathwish-Digitizer-2-Mac-Test.zip" | tail -1
-      - name: Upload macOS application
+          python packaging/build_portable_mac.py
+          unzip -t Deathwish-Digitizer-2-Mac-Test.zip | tail -1
+          python packaging/verify_portable_mac.py Deathwish-Digitizer-2-Mac-Test.zip
+      - name: Upload Mac application
         uses: actions/upload-artifact@v4
         with:
           name: deathwish-digitizer-2-mac-test
