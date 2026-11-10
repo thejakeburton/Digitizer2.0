@@ -62,7 +62,7 @@ if [ -z "$PYTHON" ]; then
 fi
 VENV="$DATA_DIR/venv"
 READY="$VENV/.deathwish-ready"
-if [ ! -f "$READY" ] || [ "$(cat "$READY" 2>/dev/null)" != "$PYTHON" ]; then
+if [ ! -f "$READY" ] || [ "$(cat "$READY" 2>/dev/null)" != "$PYTHON|geometry-v2" ]; then
   alert "First launch will install the embroidery libraries into your user account. This needs internet and may take a minute. Click OK to continue."
   if ! "$PYTHON" -m venv "$VENV" >>"$LOG_FILE" 2>&1; then
     alert "Could not create Python environment. Details: $LOG_FILE"
@@ -72,7 +72,7 @@ if [ ! -f "$READY" ] || [ "$(cat "$READY" 2>/dev/null)" != "$PYTHON" ]; then
     alert "Could not install libraries. Check your internet connection. Details: $LOG_FILE"
     exit 1
   fi
-  printf '%s' "$PYTHON" > "$READY"
+  printf '%s' "$PYTHON|geometry-v2" > "$READY"
 fi
 cd "$RESOURCES"
 if ! "$VENV/bin/python" "$RESOURCES/mac_app.py" >>"$LOG_FILE" 2>&1; then
