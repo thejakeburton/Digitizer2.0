@@ -55,6 +55,18 @@ class TestPolygonEngine(unittest.TestCase):
         self.assertEqual(scanline_intervals(7,RECT,[HOLE],edge_inset=0.2),
                          [(0.2,11.8),(23.2,34.8)])
 
+
+    def test_reject_crossing_and_invalid_holes(self):
+        bowtie=[(0,0),(10,10),(0,10),(10,0)]
+        outside=[(40,4),(42,4),(42,6),(40,6)]
+        crossing=[(30,4),(38,4),(38,7),(30,7)]
+        other=[(25,5),(29,5),(29,8),(25,8)]
+        overlap=[(27,6),(31,6),(31,9),(27,9)]
+        for outer,holes in ((bowtie,[]),(RECT,[outside]),
+                            (RECT,[crossing]),(RECT,[other,overlap])):
+            with self.subTest(outer=outer,holes=holes), self.assertRaises(ValueError):
+                polygon_tatami(outer,holes)
+
     def test_invalid(self):
         with self.assertRaises(ValueError): polygon_tatami([(0,0),(1,1),(2,2)])
         with self.assertRaises(ValueError): polygon_tatami(RECT,spacing=0)
