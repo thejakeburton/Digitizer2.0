@@ -5,8 +5,26 @@ on:
     branches: [main]
   workflow_dispatch:
 
+concurrency:
+  group: mac-test-build-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
+  cancel-stale-build:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: read
+    steps:
+      - name: Cancel stalled previous Mac test build
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api --method POST \
+            repos/${{ github.repository }}/actions/runs/42880012524/cancel || \
+            echo 'Previous run already finished or could not be canceled; proceeding.'
   package-mac:
+    needs: cancel-stale-build
     runs-on: macos-15
     timeout-minutes: 35
     steps:
