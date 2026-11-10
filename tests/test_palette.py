@@ -9,7 +9,7 @@ class PaletteRecoveryTests(unittest.TestCase):
         image[:,60:]=[240,190,0]
         for x,t in ((58,0.25),(59,0.5),(60,0.75)):
             image[:,x]=np.rint(np.array([240,190,0])*t).astype(np.uint8)
-        clean,report=recover_flat_palette(image)
+        clean,report=recover_flat_palette(image,max_colors=2)
         self.assertEqual(report["output_colors"],2)
         self.assertEqual(report["unexplained_pixels"],0)
         self.assertGreater(report["changed_pixels"],0)
@@ -21,7 +21,7 @@ class PaletteRecoveryTests(unittest.TestCase):
         image[35:40,35:40]=[10,160,230]
         for x,t in ((18,0.25),(19,0.5),(20,0.75)):
             image[20:80,x]=np.rint(np.array([200,20,10])*t).astype(np.uint8)
-        clean,report=recover_flat_palette(image)
+        clean,report=recover_flat_palette(image,max_colors=3)
         self.assertEqual(report["output_colors"],3)
         np.testing.assert_array_equal(clean[36,36],[10,160,230])
 
@@ -39,7 +39,7 @@ class PaletteRecoveryTests(unittest.TestCase):
         image[4:6,4:6]=[20,160,200]  # meaningful 2x2; no 3x3 core
         image[5:55,8]=[120,120,0]  # intermediate antialias shade
         with self.assertRaisesRegex(ValueError,"refused|unexplained"):
-            recover_flat_palette(image)
+            recover_flat_palette(image,max_colors=2)
 
     def test_exact_palette_no_op(self):
         image=np.zeros((20,20,3),dtype=np.uint8)
