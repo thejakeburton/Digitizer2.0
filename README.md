@@ -1,6 +1,6 @@
 # Deathwish Digitizer 2.0
 
-Embroidery-first architecture with an experimental image-to-PES command line pipeline. **This is not a production-ready automatic digitizer or a finished Mac application.**
+Fill-only embroidery architecture for paintball headbands, with an experimental image-to-PES command line pipeline. **This is not a production-ready automatic digitizer or a finished Mac application.**
 
 ## Try it
 
@@ -54,6 +54,12 @@ sampling. It is **not** proof of physical thread gaps, and the synthetic shape
 is **not** representative of complex logo or illustration results. The build
 is not yet cleared for production or a polished Mac interface.
 
+## Product scope
+
+**Fill stitches only.** All artwork regions use tatami-style fills, including fine regions where geometry permits. Vector tracing and detail retention remain essential. Automatic satin and decorative running-stitch generation are out of scope. Travel and underlay stitches may still use ordinary straight stitch commands; this is not a satin-feature commitment.
+
+Acceptance priorities: (1) preserve illustration details, (2) no unexplained uncovered regions or stray stitched paths, (3) controlled tatami texture without conspicuous ribbing, (4) accurate PES readback visualization, (5) sane routing and color order. Validate on actual headband fabric before production.
+
 ## Architectural rules
 
 1. Image segmentation remains independent of stitch planning.
@@ -68,11 +74,13 @@ is not yet cleared for production or a polished Mac interface.
 - **M1:** serpentine row routing with sewn connections along the boundary, inset edge-walk underlay, geometric row coverage checks, and max stitch/jump metrics. Default rectangle now needs 2 jumps total, or 1 with underlay disabled.
 - **M2:** irregular shapes and holes, safe clipped travel, horizontal edge inset, geometric coverage sampling and test shapes.
 - **M3 (current, experimental):** explicit multicolor layer planning, flat-color PNG extraction, opt-in guarded antialias cleanup and PES readback tests.
-- **M4 (planned):** robust image layering, satin and running stitch types, then Mac UI and packaging.
+- **M4 (planned):** improve fill density, stagger, and coverage, validate real headband artwork, then Mac UI and packaging. No satin generation.
 
 ## Known limitations
 
 - The edge-walk underlay is a prototype; its support and effectiveness on actual fabric are **not validated**.
 - Row-edge connectors are sewn and may create buildup on some fabrics.
-- Horizontal insets are not fabric-specific pull compensation. No fabric physics or automatic stitch-type assignment.\n- Palette cleanup requires flat solid areas, may reject isolated tiny details, and does not yet handle complex multicolor illustrations.\n- Image-derived region layering is heuristic and must be inspected.
+- Horizontal insets are not fabric-specific pull compensation. No fabric physics or automatic stitch-type assignment.
+- Palette cleanup requires flat solid areas, may reject isolated tiny details, and does not yet handle complex multicolor illustrations.
+- Image-derived region layering is heuristic and must be inspected.
 - No production PES sew-out has been verified.
