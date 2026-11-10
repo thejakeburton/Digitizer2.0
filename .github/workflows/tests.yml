@@ -19,3 +19,9 @@ jobs:
       - run: python main.py --shape polygon-rectangle --out output
       - run: python main.py --shape l-shape --out output
       - run: python main.py --shape donut --out output
+      - run: python review_pes.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pes-stitch-review
+          path: review-output/
+          if-no-files-found: error
