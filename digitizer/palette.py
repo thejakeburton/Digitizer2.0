@@ -5,7 +5,6 @@ fringe colors if they fit a linear blend of two detected solids. Reject
 unexplained colors rather than inventing or silently erasing details.
 """
 import numpy as np
-import cv2
 
 
 def _color_tuple(rgb):
@@ -23,15 +22,20 @@ def recover_flat_palette(rgb, max_colors=12, tolerance=18.0,
         raise ValueError("Expected uint8 RGB image")
     height,width=rgb.shape[:2]
     unique, counts=np.unique(rgb.reshape(-1,3),axis=0,return_counts=True)
-    candidates=[]
-    # Need at least one solid 3x3 pixel core; this distinguishes solid
-    # intentional colors from the 1-pixel antialias fringe in ordinary art.
-    for color,count in zip(unique,counts):
-        mask=cv2.inRange(rgb,color,color)
-        core=cv2.erode(mask,np.ones((3,3),np.uint8),
-                       borderType=cv2.BORDER_CONSTANT,borderValue=0)
-        if np.any(core):
-            candidates.append((_color_tuple(color),int(count)))
+    # Detect all uniform 3x3 cores in one image-sized pass rather than
+    # scanning the entire image independently for each antialias shade.
+    core=rgb[1:-1,1:-1]
+    uniform=np.ones((height-2,width-2),dtype=bool)
+    for dy in (-1,0,1):
+        for dx in (-1,0,1):
+            if dy==0 and dx==0:
+                continue
+            uniform &= np.all(core==rgb[1+dy:height-1+dy,
+                                         1+dx:width-1+dx],axis=2)
+    core_colors=np.unique(core[uniform],axis=0).tolist()
+    counts_by_color={_color_tuple(c):int(n) for c,n in zip(unique,counts)}
+    candidates=[(_color_tuple(c),counts_by_color[_color_tuple(c)])
+                for c in core_colors]
     candidates.sort(key=lambda a:(-a[1],a[0]))
     if not candidates or len(candidates)>max_colors:
         raise ValueError("Cannot recover a reliable flat-color palette; "
