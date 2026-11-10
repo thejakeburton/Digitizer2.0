@@ -64,7 +64,7 @@ def main():
     (out/(filename+'_metrics.json')).write_text(json.dumps(report,indent=2))
     if a.pes:
         from digitizer.export import write_pes
-        write_pes(cmds,out/(filename+'.pes'))
+        write_pes(cmds,out/(filename+'.pes'), colors=colors or None)
     print(json.dumps(report,indent=2))
     print('Preview:',out/(filename+'.svg'))
 
