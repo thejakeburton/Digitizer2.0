@@ -26,8 +26,9 @@ class TestEndToEnd(unittest.TestCase):
             self.assertTrue(target.exists())
             self.assertGreater(target.stat().st_size,100)
             decoded=pe.read_pes(str(target))
-            decoded_colors=[thread.get_hex_color().lower() for thread in decoded.threadlist]
-            self.assertGreaterEqual(len(decoded_colors),2)
+            # PES readback may use the limited PEC palette; validate color blocks
+            # and stitch structure rather than assuming exact RGB round-trip.
+            self.assertGreaterEqual(len(decoded.threadlist),2)
             self.assertGreater(len(decoded.stitches),50)
 
     def test_export_requires_matching_thread_count(self):
