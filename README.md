@@ -36,6 +36,24 @@ The `--antialias-cleanup` flag is **opt-in**. It identifies solid 3x3 color core
 
 **Do not use this prototype for production embroidery without inspecting the PES in an embroidery viewer and doing a controlled scrap sew-out.** SVG is a command visualization, not a fabric or thread-coverage prediction.
 
+## Visual review of the exported PES
+
+Every successful GitHub Actions **Tests** run produces an artifact named
+`pes-stitch-review`. In the workflow run, open **Artifacts** and download it.
+
+The artifact contains:
+- `source.png` — the controlled two-color test image
+- `test.pes` — an actual PES export to inspect in Artspira
+- `actual-sewn-only.png` — sewn stitches decoded back from the PES
+- `actual-with-jumps.png` — identical preview, with **non-sewn** travel in red
+- `estimated-coverage.png` — magenta indicates nominal uncovered areas
+- `report.json` — jumps, trims, distances, nominal coverage per thread
+
+The coverage image assumes 0.4mm nominal thread footprint and uses pixel
+sampling. It is **not** proof of physical thread gaps, and the synthetic shape
+is **not** representative of complex logo or illustration results. The build
+is not yet cleared for production or a polished Mac interface.
+
 ## Architectural rules
 
 1. Image segmentation remains independent of stitch planning.
