@@ -1,0 +1,2 @@
+# The geometry benchmark runs on Python's standard library alone.
+# Install the PES writer with: pip install pyembroidery
